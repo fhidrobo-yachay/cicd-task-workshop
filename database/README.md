@@ -1,0 +1,1 @@
+The API initializes the table at startup. Aiven MySQL connection uses the SQLAlchemy mysql+pymysql URL and a downloaded CA certificate; never commit the CA file or credentials. Local CI uses SQLite for fast isolated tests.

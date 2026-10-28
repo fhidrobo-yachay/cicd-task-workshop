@@ -1,0 +1,32 @@
+name: Deploy after CI
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm deployment configuration
+        env:
+          API_HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK }}
+          UI_HOOK: ${{ secrets.RENDER_UI_DEPLOY_HOOK }}
+        run: test -n "$API_HOOK" && test -n "$UI_HOOK"
+  deploy:
+    needs: gate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Trigger API deployment
+        env:
+          HOOK: ${{ secrets.RENDER_API_DEPLOY_HOOK }}
+        run: curl --fail --show-error --silent --retry 3 -X POST "$HOOK"
+      - name: Trigger frontend deployment
+        env:
+          HOOK: ${{ secrets.RENDER_UI_DEPLOY_HOOK }}
+        run: curl --fail --show-error --silent --retry 3 -X POST "$HOOK"

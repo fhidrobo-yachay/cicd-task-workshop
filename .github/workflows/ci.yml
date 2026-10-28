@@ -1,0 +1,44 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements-dev.txt
+      - name: Python lint
+        run: ruff check .
+      - name: Python static security analysis
+        run: bandit -q -r app
+      - name: API endpoint tests
+        run: pytest -q
+      - name: Dependency vulnerability audit
+        run: pip-audit -r requirements.txt
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - name: JavaScript lint
+        run: npm run lint
+      - name: Frontend tests
+        run: npm test
+      - name: Production build
+        run: npm run build
